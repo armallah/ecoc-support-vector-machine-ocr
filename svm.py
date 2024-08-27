@@ -1,26 +1,56 @@
-#svm.py
+# svm.py
 
 import numpy as np
-#CVXOPT for convex optimization and quadratic programming solver..
+
+# CVXOPT for convex optimization and quadratic programming solver..
 from cvxopt import matrix, solvers
 
+
 class SVM:
-    
-    def __init__(self, w, w0, learning_rate=0.01, lambda_param=0.01, n_iters=1000):
-        self.w = None
+
+    def __init__(self, C=1.0):
+        self.C = C
+        self.support_vectors = None
+        self.support_vector_labels = None
+        self.support_vector_weights = None
+
         self.w0 = None
-        self.learning_rate = learning_rate,
-        self.lambda_param = lambda_param,
-        self.n_iters = n_iters
+        self.w = None
+        
+    def __linear__kernel_func(self, x1, x2):
+        """
+        Kernel function - linear kernel
+        """
+        return np.dot(x1, x2)
     
+    def __polynomial_kernel_func(self, x1, x2, degree=3):
+        """
+        Kernel function - polynomial kernel
+        """
+        return (np.dot(x1, x2) + 1) ** degree
+    
+    def __rbf_kernel_func(self, x1, x2, gamma=0.1):
+        """
+        Kernel function - Radial basis function kernel
+        """
+        return np.exp(-gamma * np.linalg.norm(x1 - x2) ** 2)
+
+    def __calc_gram_matrix(self, X, kenrel_func=self.__linear__kernel_func):
+        """
+        Calculate the Gram matrix, X^T * X, for wolfe dual problem
+        """
+        n_samples, n_features = X.shape
+        K = np.zeros((n_samples, n_samples))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                K[i, j] = self.kernel_func(X[i], X[j])
+        return K
+
     def fit(self, X, y):
         n_samples, n_features = X.shape
-        
-        self.w = np.zeros(n_features)
-        self.w0 = 0
-        
-        for i in range(self.n_iters):
-            for idx, x_i in enumerate(X):
-                condition = y[idx] * (np.dot(x_i, self.w) - self.w0) >= 1
 
-        
+        # Gram matrix
+        K = np.zeros((n_samples, n_samples))
+        for i in range(n_samples):
+            for j in range(n_samples):
+                K[i, j] = np.dot(X[i], X[j])
